@@ -1,0 +1,10 @@
+# .gitignore for Flask App
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+instance/
+.pytest_cache/
+quiz_app.db
+uploads/
+*.pdf

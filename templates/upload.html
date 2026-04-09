@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload PDF - AptitudeAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 48px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 { font-size: 32px; margin: 0 0 12px 0; text-align: center; }
+        p { color: #94a3b8; text-align: center; margin-bottom: 40px; }
+
+        .form-group { margin-bottom: 24px; }
+        label { display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: 500; }
+
+        .file-input-wrapper {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-input-wrapper:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        input[type="file"] { display: none; }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 24px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Upload Material</h1>
+            <p>Our AI will analyze your PDF and generate custom aptitude questions.</p>
+            
+            <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
+                <div class="form-group">
+                    <label for="pdf">PDF Document</label>
+                    <div class="file-input-wrapper" onclick="document.getElementById('pdf').click()">
+                        <div id="file-name" style="margin-bottom: 10px;">Click to select file</div>
+                        <span style="font-size: 14px; color: #64748b;">PDF files only (Max 10MB)</span>
+                        <input type="file" name="pdf" id="pdf" accept=".pdf" required onchange="updateFileName(this)">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="num_questions">Number of Questions</label>
+                    <input type="number" name="num_questions" id="num_questions" value="10" min="5" max="30">
+                </div>
+
+                <button type="submit" class="btn" id="submit-btn">Generate AI Quiz</button>
+            </form>
+
+            <a href="/dashboard" class="back-link">← Cancel and return</a>
+        </div>
+    </div>
+
+    <script>
+        function updateFileName(input) {
+            const name = input.files[0] ? input.files[0].name : "Click to select file";
+            document.getElementById('file-name').innerText = name;
+            document.getElementById('file-name').style.color = "white";
+        }
+
+        document.getElementById('upload-form').onsubmit = function() {
+            document.getElementById('submit-btn').innerText = "Analyzing PDF... Please wait";
+            document.getElementById('submit-btn').disabled = true;
+            document.getElementById('submit-btn').style.opacity = "0.7";
+        };
+    </script>
+</body>
+</html>

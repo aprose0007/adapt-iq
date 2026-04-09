@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - AptitudeAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .student-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .student-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .student-name {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .progress-container {
+            flex-grow: 1;
+            max-width: 400px;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .progress-bar {
+            background: #e0e0e0;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .timer {
+            background: #f8f9fa;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            border: 2px solid #667eea;
+        }
+        
+        /* Question Card */
+        .question-card {
+            background: white;
+            border-radius: 0 0 15px 15px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .question-number {
+            font-size: 14px;
+            color: #667eea;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .question-text {
+            font-size: 22px;
+            color: #333;
+            margin-bottom: 30px;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+        
+        /* Options - Exam Style */
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .option {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .option:hover {
+            background: #e8eaf6;
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+        
+        .option.selected {
+            background: #e8eaf6;
+            border-color: #667eea;
+            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+        }
+        
+        .option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+        
+        .option label {
+            font-size: 16px;
+            color: #333;
+            cursor: pointer;
+            flex-grow: 1;
+            line-height: 1.5;
+        }
+        
+        /* Navigation Buttons */
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Question Navigator */
+        .question-navigator {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .navigator-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .question-numbers {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .question-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .question-number:hover {
+            background: #e8eaf6;
+            transform: scale(1.1);
+        }
+        
+        .question-number.current {
+            background: #667eea;
+            color: white;
+        }
+        
+        .question-number.answered {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        
+        /* Submit Area */
+        .submit-area {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            font-size: 18px;
+            padding: 15px 50px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 768px) {
+            .question-text {
+                font-size: 18px;
+            }
+            .option {
+                padding: 12px 15px;
+            }
+            .btn {
+                padding: 10px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="student-info">
+                <div class="student-icon">{{ session.get('user_name', 'S')[:1] }}</div>
+                <div class="student-name">{{ session.get('user_name', 'Student') }}</div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-label">
+                    <span>Progress</span>
+                    <span id="progress-text">0/{{ total }}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="timer" id="timer">00:00</div>
+        </div>
+        
+        <div class="question-card">
+            <div id="quiz-container">
+                <div style="text-align: center; padding: 60px 20px;">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 20px; color: #666;">Loading your questions...</p>
+                </div>
+            </div>
+            
+            <div class="question-navigator">
+                <div class="navigator-title">Quick Navigation</div>
+                <div class="question-numbers" id="question-numbers"></div>
+            </div>
+            
+            <div class="submit-area">
+                <button class="submit-btn" onclick="submitQuiz()" id="submitBtn">✅ Submit Quiz</button>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Select one answer for each question. Your progress is saved automatically.</p>
+        </div>
+    </div>
+
+    <script>
+        let totalQuestions = { total };
+        let currentQuestion = 0;
+        let answers = {};
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadQuestion(0);
+            updateQuestionNumbers();
+            startTimer();
+        });
+        
+        function startTimer() {
+            timerInterval = setInterval(function() {
+                secondsElapsed++;
+                let minutes = Math.floor(secondsElapsed / 60);
+                let seconds = secondsElapsed % 60;
+                document.getElementById('timer').textContent = 
+                    minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+            }, 1000);
+        }
+        
+        function loadQuestion(qid) {
+            fetch('/api/question/' + qid)
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    currentQuestion = qid;
+                    displayQuestion(data);
+                    updateProgress(qid);
+                    updateQuestionNumbers();
+                })
+                .catch(function(error) {
+                    console.error('Error loading question:', error);
+                });
+        }
+        
+        function displayQuestion(data) {
+            let question = data.question;
+            let container = document.getElementById('quiz-container');
+            
+            let optionsHtml = '';
+            for (let i = 0; i < question.options.length; i++) {
+                let option = question.options[i];
+                let optionLetter = option.charAt(0);
+                let isChecked = (question.user_answer === optionLetter);
+                
+                let selectedClass = isChecked ? 'selected' : '';
+                let checkedAttr = isChecked ? 'checked' : '';
+                
+                optionsHtml += `
+                    <div class="option ${selectedClass}" onclick="selectOption('${optionLetter}', this)">
+                        <input type="radio" name="question-option" value="${optionLetter}" ${checkedAttr}>
+                        <label>${option}</label>
+                    </div>
+                `;
+            }
+            
+            let prevDisabled = data.has_prev ? '' : 'disabled';
+            let nextDisabled = data.has_next ? '' : 'disabled';
+            
+            container.innerHTML = `
+                <div class="question-number">Question ${currentQuestion + 1} of ${totalQuestions}</div>
+                <div class="question-text">${question.question}</div>
+                <div class="options">${optionsHtml}</div>
+                <div class="navigation">
+                    <button class="btn btn-secondary" onclick="previousQuestion()" ${prevDisabled}>← Previous</button>
+                    <button class="btn btn-primary" onclick="nextQuestion()" ${nextDisabled}>Next →</button>
+                </div>
+            `;
+        }
+        
+        function selectOption(letter, element) {
+            let options = document.querySelectorAll('.option');
+            for (let i = 0; i < options.length; i++) {
+                options[i].classList.remove('selected');
+                let radio = options[i].querySelector('input[type="radio"]');
+                if (radio) radio.checked = false;
+            }
+            
+            if (element) {
+                element.classList.add('selected');
+                let radio = element.querySelector('input[type="radio"]');
+                if (radio) radio.checked = true;
+            }
+            
+            saveAnswer(letter);
+        }
+        
+        function saveAnswer(letter) {
+            answers[currentQuestion] = letter;
+            
+            fetch('/api/submit-answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question_id: currentQuestion, answer: letter })
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.success) {
+                    updateQuestionNumbers();
+                    updateProgressFromAnswers();
+                }
+            });
+        }
+        
+        function nextQuestion() {
+            if (currentQuestion < totalQuestions - 1) {
+                loadQuestion(currentQuestion + 1);
+            }
+        }
+        
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                loadQuestion(currentQuestion - 1);
+            }
+        }
+        
+        function updateProgress(qid) {
+            let progress = ((qid + 1) / totalQuestions) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+            document.getElementById('progress-text').textContent = (qid + 1) + '/' + totalQuestions;
+        }
+        
+        function updateProgressFromAnswers() {
+            let answeredCount = Object.keys(answers).length;
+            let progress = (answeredCount / totalQuestions) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+            document.getElementById('progress-text').textContent = answeredCount + '/' + totalQuestions;
+        }
+        
+        function updateQuestionNumbers() {
+            let container = document.getElementById('question-numbers');
+            if (!container) return;
+            
+            let html = '';
+            for (let i = 0; i < totalQuestions; i++) {
+                let classes = 'question-number';
+                if (i === currentQuestion) classes += ' current';
+                if (answers[i] !== undefined) classes += ' answered';
+                html += '<div class="' + classes + '" onclick="loadQuestion(' + i + ')">' + (i + 1) + '</div>';
+            }
+            container.innerHTML = html;
+        }
+        
+        function submitQuiz() {
+            let answeredCount = Object.keys(answers).length;
+            
+            if (answeredCount < totalQuestions) {
+                let confirmMsg = confirm('You have answered ' + answeredCount + ' out of ' + totalQuestions + ' questions.\nUnanswered questions will be marked wrong.\n\nSubmit anyway?');
+                if (!confirmMsg) {
+                    return;
+                }
+            } else {
+                let confirmMsg = confirm('All questions answered! Ready to see your results?');
+                if (!confirmMsg) {
+                    return;
+                }
+            }
+            
+            if (timerInterval) clearInterval(timerInterval);
+            window.location.href = '/results';
+        }
+    </script>
+</body>
+</html>

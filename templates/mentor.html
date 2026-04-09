@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mentor - AptitudeAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .back-link {
+            color: #94a3b8;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .header {
+        
+        .progress-text {
+            color: #666;
+            margin: 15px 0;
+            font-size: 16px;
+        }
+        
+        .resources-section {
+            margin-bottom: 30px;
+        }
+        
+        .resources-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+        
+        .resource-list {
+            list-style: none;
+        }
+        
+        .resource-item {
+            padding: 18px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.3s;
+        }
+        
+        .resource-item:hover {
+            background: #e8eaf6;
+            transform: translateX(5px);
+        }
+        
+        .resource-icon {
+            font-size: 28px;
+        }
+        
+        .resource-content {
+            flex-grow: 1;
+        }
+        
+        .resource-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        .resource-desc {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .next-level {
+            background: #e8eaf6;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .next-level h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .next-level p {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .mentor-card {
+                padding: 25px;
+            }
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            .resource-item {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="mentor-card">
+            <div class="header">
+                <div class="mentor-icon">🎓</div>
+                <div class="mentor-title">
+                    <h2>Your Personal Learning Mentor</h2>
+                    <p>AI-powered guidance based on your performance</p>
+                </div>
+            </div>
+            
+            <div class="level-section">
+                <span class="level-badge level-{{ level }}">Current Level: {{ level|title }}</span>
+                <p class="progress-text">📊 You've completed <strong>{{ attempts }}</strong> quiz{% if attempts != 1 %}zes{% endif %} so far.</p>
+                <p class="progress-text">💪 Keep going! Every quiz helps you improve.</p>
+            </div>
+            
+            <div class="resources-section">
+                <h3>📚 Recommended Learning Resources</h3>
+                <div class="resource-list">
+                    {% for resource in resources %}
+                    <div class="resource-item">
+                        <div class="resource-icon">
+                            {% if loop.index == 1 %}📖
+                            {% elif loop.index == 2 %}🎥
+                            {% else %}✍️
+                            {% endif %}
+                        </div>
+                        <div class="resource-content">
+                            <div class="resource-title">{{ resource }}</div>
+                            <div class="resource-desc">
+                                {% if loop.index == 1 %}
+                                    Build a strong foundation
+                                {% elif loop.index == 2 %}
+                                    Visual learning materials
+                                {% else %}
+                                    Practice to reinforce concepts
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="next-level">
+                <h4>🚀 Next Milestone</h4>
+                <p>{{ next_level }}</p>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="/upload" class="btn btn-primary">📤 Take Another Quiz</a>
+                <a href="/dashboard" class="btn btn-secondary">📊 Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
