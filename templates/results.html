@@ -1,141 +1,79 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Results - AptitudeAI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #6366f1;
-            --secondary: #a855f7;
-            --bg: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --border: rgba(255, 255, 255, 0.1);
-        }
+{% extends "base.html" %}
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Outfit', sans-serif;
-            background: var(--bg);
-            color: white;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+{% block title %}Results - AdaptIQ{% endblock %}
 
-        .container {
-            width: 100%;
-            max-width: 900px;
-            padding: 40px 20px;
-        }
+{% block extra_head %}
+<style>
+    .score-circle {
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        margin: 0 auto 32px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
+    }
+    .score-val { font-size: 48px; font-weight: 700; line-height: 1; }
+    .score-label { font-size: 14px; opacity: 0.8; font-weight: 600; }
+    
+    .topics-section {
+        text-align: left;
+        margin-top: 48px;
+        border-top: 1px solid var(--border);
+        padding-top: 40px;
+    }
+    .topic-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 16px;
+        margin-bottom: 12px;
+        border: 1px solid transparent;
+        transition: all 0.2s;
+    }
+    .topic-row:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: var(--border);
+    }
+    .topic-name { font-weight: 600; font-size: 16px; margin-bottom: 4px; color: var(--text); }
+    .topic-pages { font-size: 13px; color: var(--muted); }
+    .topic-percentage { font-weight: 700; color: #818cf8; font-size: 18px; }
+</style>
+{% endblock %}
 
-        .result-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 30px;
-            padding: 60px;
-            backdrop-filter: blur(20px);
-            text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
+{% block content %}
+<div class="centered-container" style="padding-top: 40px; padding-bottom: 40px;">
+    <div class="card text-center" style="max-width: 900px; width: 100%;">
+        <div class="score-circle">
+            <div class="score-val">{{ percentage }}%</div>
+            <div class="score-label">SCORE</div>
+        </div>
+        
+        <h1 class="mb-2" style="font-size: 32px;">{{ advice }}</h1>
+        <p class="subtitle mb-4" style="font-size: 18px;">You've completed the quiz. See your topic breakdown below to identify areas for improvement.</p>
 
-        .score-circle {
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            margin: 0 auto 32px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
-        }
-
-        .score-val { font-size: 48px; font-weight: 700; line-height: 1; }
-        .score-label { font-size: 14px; opacity: 0.8; font-weight: 600; }
-
-        h1 { font-size: 32px; margin-bottom: 12px; }
-        .advice { color: #94a3b8; font-size: 18px; margin-bottom: 48px; }
-
-        .topics-section {
-            text-align: left;
-            margin-top: 48px;
-            border-top: 1px solid var(--border);
-            padding-top: 48px;
-        }
-
-        .topics-section h2 { font-size: 20px; margin-bottom: 24px; color: #f1f5f9; }
-
-        .topic-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 24px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 16px;
-            margin-bottom: 12px;
-        }
-
-        .topic-meta { display: flex; flex-direction: column; }
-        .topic-name { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
-        .topic-pages { font-size: 12px; color: #64748b; }
-
-        .topic-percentage { font-weight: 700; color: #818cf8; font-size: 18px; }
-
-        .actions {
-            margin-top: 48px;
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-        }
-
-        .btn {
-            padding: 14px 32px;
-            border-radius: 12px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-secondary { background: rgba(255, 255, 255, 0.05); color: #94a3b8; border: 1px solid var(--border); }
-
-        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="result-card">
-            <div class="score-circle">
-                <div class="score-val">{{ percentage }}%</div>
-                <div class="score-label">SCORE</div>
-            </div>
-            
-            <h1>{{ advice }}</h1>
-            <p class="advice">You've completed the quiz. See your topic breakdown below to identify areas for improvement.</p>
-
-            <div class="topics-section">
-                <h2>Topic Breakdown</h2>
-                {% for topic in topic_performance %}
-                <div class="topic-row">
-                    <div class="topic-meta">
-                        <span class="topic-name">{{ topic.topic }}</span>
-                        <span class="topic-pages">Source: Pages {{ topic.pages|join(', ') }}</span>
-                    </div>
-                    <span class="topic-percentage">{{ topic.percentage }}%</span>
+        <div class="topics-section">
+            <h2 class="mb-3" style="font-size: 20px;">Topic Breakdown</h2>
+            {% for topic in topic_performance %}
+            <div class="topic-row">
+                <div class="flex" style="flex-direction: column;">
+                    <span class="topic-name">{{ topic.topic }}</span>
+                    <span class="topic-pages">Source: Pages {{ topic.pages|join(', ') }}</span>
                 </div>
-                {% endfor %}
+                <span class="topic-percentage">{{ topic.percentage }}%</span>
             </div>
+            {% endfor %}
+        </div>
 
-            <div class="actions">
-                <a href="/mentor" class="btn btn-primary">Get AI Advice</a>
-                <a href="/dashboard" class="btn btn-secondary">Go to Dashboard</a>
-            </div>
+        <div class="flex justify-center gap-4 mt-4">
+            <a href="/mentor" class="btn btn-primary">Get AI Advice</a>
+            <a href="/dashboard" class="btn btn-secondary">Go to Dashboard</a>
         </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

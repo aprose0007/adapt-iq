@@ -3,18 +3,20 @@ import pdfplumber
 import os
 import time
 import re
-from database import db
+import json
+from database import db, DB_NOT_READY
 from ai_engine import ai_engine
 from analysis_agent import analysis_agent
+import firebase_admin.auth as fb_auth
 
 app = Flask(__name__)
 app.secret_key = "bca-project-secret-key-2024"
 
 print("\n" + "="*60)
-print("🎓 ADAPTIVE APTITUDE LEARNING SYSTEM")
+print("[*] ADAPTIVE APTITUDE LEARNING SYSTEM")
 print("="*60)
-print(f"📍 Server: http://127.0.0.1:5000")
-print("⚡ INSTANT MODE - Questions from your PDF (No API waiting!)")
+print(f"[+] Server: http://127.0.0.1:5000")
+print("[~] INSTANT MODE - Questions from your PDF (No API waiting!)")
 print("="*60 + "\n")
 
 # ============================================
@@ -25,6 +27,18 @@ print("="*60 + "\n")
 def home():
     return render_template("index.html")
 
+def firebase_config():
+    """Return Firebase web config dict for passing to templates."""
+    return {
+        'api_key':              os.getenv('FIREBASE_WEB_API_KEY', ''),
+        'auth_domain':          'adapt-iq-fc122.firebaseapp.com',
+        'project_id':           'adapt-iq-fc122',
+        'storage_bucket':       'adapt-iq-fc122.firebasestorage.app',
+        'messaging_sender_id':  os.getenv('FIREBASE_MESSAGING_SENDER_ID', '604029275994'),
+        'app_id':               os.getenv('FIREBASE_APP_ID', ''),
+        'measurement_id':       os.getenv('FIREBASE_MEASUREMENT_ID', ''),
+    }
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -33,7 +47,11 @@ def login():
         
         student = db.login_student(username, password)
         
-        if student:
+        if student == DB_NOT_READY:
+            return render_template("login.html",
+                error="Firestore database not set up yet. Please create it at console.cloud.google.com/datastore/setup?project=adapt-iq-fc122",
+                firebase=firebase_config())
+        elif student:
             session['user_id'] = student['id']
             session['username'] = student['username']
             session['user_name'] = student['name']
@@ -41,9 +59,11 @@ def login():
             session['attempts'] = db.get_student_history(student['id'])
             return redirect('/dashboard')
         else:
-            return render_template("login.html", error="Invalid username or password")
+            return render_template("login.html",
+                error="Invalid username or password",
+                firebase=firebase_config())
     
-    return render_template("login.html")
+    return render_template("login.html", firebase=firebase_config())
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -55,12 +75,18 @@ def register():
         
         result = db.register_student(username, password, name, email)
         
-        if result:
+        if result == DB_NOT_READY:
+            return render_template("register.html",
+                error="Firestore database not set up yet. Please create it at console.cloud.google.com/datastore/setup?project=adapt-iq-fc122",
+                firebase=firebase_config())
+        elif result:
             return redirect('/login')
         else:
-            return render_template("register.html", error="Username already exists")
+            return render_template("register.html",
+                error="Username already exists",
+                firebase=firebase_config())
     
-    return render_template("register.html")
+    return render_template("register.html", firebase=firebase_config())
 
 @app.route('/dashboard')
 def dashboard():
@@ -82,6 +108,42 @@ def logout():
     return redirect('/')
 
 # ============================================
+# GOOGLE SIGN-IN
+# ============================================
+
+@app.route('/auth/google', methods=['POST'])
+def google_auth():
+    """Verify Firebase ID token and create session for Google sign-in."""
+    data = request.json
+    id_token = data.get('id_token')
+    
+    if not id_token:
+        return jsonify({'success': False, 'error': 'No token provided'}), 400
+    
+    try:
+        decoded = fb_auth.verify_id_token(id_token)
+        uid     = decoded['uid']
+        email   = decoded.get('email', '')
+        name    = decoded.get('name', email.split('@')[0])
+        picture = decoded.get('picture', '')
+        
+        user = db.get_or_create_google_user(uid, name, email, picture)
+        
+        session['user_id']   = uid
+        session['username']  = email
+        session['user_name'] = name
+        session['level']     = user.get('level', 'beginner')
+        session['attempts']  = db.get_student_history(uid)
+        session['avatar']    = picture
+        
+        return jsonify({'success': True, 'redirect': '/dashboard'})
+    except fb_auth.InvalidIdTokenError:
+        return jsonify({'success': False, 'error': 'Invalid token'}), 401
+    except Exception as e:
+        print(f'[Google Auth] Error: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============================================
 # PDF UPLOAD & INSTANT QUESTIONS
 # ============================================
 
@@ -96,7 +158,7 @@ def extract_pdf_text(pdf_path):
     text = ""
     try:
         with pdfplumber.open(pdf_path) as pdf:
-            print(f"📄 PDF has {len(pdf.pages)} pages")
+            print(f"[PDF] PDF has {len(pdf.pages)} pages")
             for i, page in enumerate(pdf.pages):
                 page_text = page.extract_text()
                 if page_text:
@@ -246,12 +308,12 @@ def upload_file():
         session['answers'] = {}
         session['topics'] = topics
         
-        print(f"Generated {len(questions)} AI questions with topics: {topics}\n")
+        print(f"Generated {len(questions)} AI questions with topics: {topics}")
         
         return redirect('/quiz')
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[!] Error: {e}")
         return render_template("error.html", error=f"Error: {str(e)}")
 
 # ============================================

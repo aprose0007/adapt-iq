@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AdaptIQ{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% if not hide_nav %}
+    <nav class="navbar">
+        <a href="{% if session.get('user_id') %}/dashboard{% else %}/{% endif %}" style="text-decoration: none; color: inherit;">
+            <div class="logo">
+                <div class="logo-icon">🧠</div>
+                <div class="logo-text">Adapt<span>IQ</span></div>
+            </div>
+        </a>
+        <div class="nav-links">
+            {% if session.get('user_id') %}
+                <a href="/upload">New Quiz</a>
+                <a href="/mentor">Mentor</a>
+                <span class="btn btn-secondary" style="padding: 8px 16px; margin-left: 10px;">{{ session.get('user_name', 'Student') }}</span>
+                <a href="/logout" style="color: var(--error);">Logout</a>
+            {% else %}
+                <a href="/login">Login</a>
+                <a href="/register" class="btn btn-primary" style="padding: 8px 16px;">Sign Up</a>
+            {% endif %}
+        </div>
+    </nav>
+    {% endif %}
+
+    {% block content %}
+    {% endblock %}
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

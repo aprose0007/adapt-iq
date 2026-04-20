@@ -1,4 +1,5 @@
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import os
 import json
 import re
@@ -10,15 +11,17 @@ load_dotenv()
 
 class AIEngine:
     def __init__(self):
-        # API Key should be set in environment variables
+        # API Key loaded from .env
         api_key = os.getenv("GEMINI_API_KEY")
         if api_key:
-            genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
+            self.client = genai.Client(api_key=api_key)
+            self.model_id = 'gemini-2.0-flash'
             self.has_api = True
+            print("Gemini API connected.")
         else:
             print("GEMINI_API_KEY not found. Running in Demo Mode.")
             self.has_api = False
+            self.client = None
 
     def extract_text(self, pdf_path):
         """Extract text with page numbers for mapping"""
@@ -49,8 +52,10 @@ class AIEngine:
         """
         
         try:
-            response = self.model.generate_content(prompt)
-            # Find JSON in response
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=prompt
+            )
             match = re.search(r'\[.*\]', response.text, re.DOTALL)
             if match:
                 return json.loads(match.group())
@@ -68,42 +73,47 @@ class AIEngine:
         full_text = " ".join([p['text'] for p in pages_content])
         
         prompt = f"""
-        Generate {num_questions} professional competitive-exam style multiple-choice questions (MCQs) for an aptitude test based on the material below.
+        You are an expert educational content creator and psychometrician specializing in competitive exams.
+        Generate {num_questions} professional, highly detailed, and rigorous multiple-choice questions (MCQs) based strictly on the provided educational material.
         
-        The questions should:
-        - Be rigorous and follow the pattern of standard competitive exams (GMAT/GRE/CAT).
-        - Cover various sections of the text.
-        - Include clear distractors (wrong options) that are plausible.
+        CRITICAL REQUIREMENTS FOR QUESTIONS AND OPTIONS:
+        1. **Detail and Rigor**: Questions must be in-depth, testing comprehension, application, and analytical skills, not just rote memorization.
+        2. **Relevant Options**: The 4 options (A, B, C, D) MUST be highly relevant to the question. The distractors (incorrect options) must be highly plausible, addressing common misconceptions or errors related to the topic. Avoid silly or obvious wrong answers.
+        3. **Detailed Explanation**: The explanation must be comprehensive. It should explain exactly why the correct answer is right, AND briefly explain why each of the other options is incorrect.
+        4. **Coverage**: Distribute the questions evenly across the provided text content.
         
         For each question, provide:
-        - The question text
+        - The question text (detailed and clear)
         - 4 options (A, B, C, D)
-        - The correct option letter
-        - A detailed logical explanation for why the answer is correct
-        - The specific aptitude topic (e.g. Quantitative, Logical, Verbal)
-        - The source page number.
+        - The correct option letter (just the letter: A, B, C, or D)
+        - A detailed logical explanation for why the answer is correct and others are wrong.
+        - The specific aptitude topic (e.g. Quantitative, Logical, Verbal, Reading Comprehension, Data Interpretation)
+        - The source page number (estimate based on the text if necessary, default to 1).
 
-        Return strictly as a JSON list of objects:
+        Return your output STRICTLY as a valid JSON array of objects, with no markdown formatting outside of the array. The JSON should match this structure:
         [
           {{
-            "question": "...",
-            "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+            "question": "Detailed question text...",
+            "options": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],
             "correct": "A",
-            "explanation": "...",
-            "topic": "...",
+            "explanation": "Detailed explanation covering why A is correct, and why B, C, and D are incorrect...",
+            "topic": "Specific Topic",
             "page": 1
           }}
         ]
 
-        Text Content: {full_text[:12000]}
+        Text Content to Base Questions On:
+        {full_text[:12000]}
         """
 
         try:
-            response = self.model.generate_content(prompt)
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=prompt
+            )
             match = re.search(r'\[.*\]', response.text, re.DOTALL)
             if match:
                 questions = json.loads(match.group())
-                # Add unique IDs
                 for i, q in enumerate(questions):
                     q['id'] = i
                 return questions

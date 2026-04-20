@@ -8,3 +8,4 @@ instance/
 quiz_app.db
 uploads/
 *.pdf
+*-firebase-adminsdk-*.json

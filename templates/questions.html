@@ -1,118 +1,64 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Generated Questions</title>
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: 'Segoe UI', sans-serif;
-            min-height: 100vh;
-            padding: 40px 20px;
-            margin: 0;
-        }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        h2 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #667eea;
-            padding-bottom: 15px;
-        }
-        .questions {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 30px;
-            white-space: pre-wrap;
-            font-family: 'Courier New', monospace;
-            line-height: 1.8;
-            border: 1px solid #e0e0e0;
-            margin: 20px 0;
-        }
-        .rate-limit-message {
-            background: #fff3cd;
-            border-left: 5px solid #ffc107;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            color: #856404;
-        }
-        .rate-limit-message h3 {
-            margin-top: 0;
-            color: #856404;
-        }
-        .rate-limit-message ul {
-            margin-bottom: 0;
-        }
-        .button-group {
-            text-align: center;
-            margin-top: 30px;
-        }
-        .btn {
-            display: inline-block;
-            padding: 12px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 10px;
-            margin: 10px;
-            font-weight: 600;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-        .btn-secondary {
-            background: #6c757d;
-        }
-        .btn-secondary:hover {
-            background: #5a6268;
-            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
-        }
-        .info-box {
-            background: #e3f2fd;
-            border-left: 5px solid #2196f3;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 20px 0;
-            font-size: 14px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="card">
-            <h2>📝 Generated Questions</h2>
-            
-            {% if questions.startswith('<div') %}
-                <!-- Rate limit message or error HTML -->
-                {{ questions|safe }}
-            {% else %}
-                <!-- Normal questions -->
-                <div class="questions">{{ questions }}</div>
-            {% endif %}
-            
-            <div class="info-box">
-                <strong>ℹ️ Free Tier Note:</strong> Gemini API has rate limits. 
-                If you see rate limit messages, just wait 60 seconds and try again.
-            </div>
-            
-            <div class="button-group">
-                <a href="/upload" class="btn">📤 Upload Another PDF</a>
-                <a href="/" class="btn btn-secondary">🏠 Go Home</a>
-            </div>
+{% extends "base.html" %}
+
+{% block title %}Generated Questions - AdaptIQ{% endblock %}
+
+{% block extra_head %}
+<style>
+    .questions {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 15px;
+        padding: 30px;
+        white-space: pre-wrap;
+        font-family: 'Courier New', monospace;
+        line-height: 1.8;
+        border: 1px solid var(--border);
+        margin: 20px 0;
+        text-align: left;
+    }
+    .rate-limit-message {
+        background: rgba(251,191,36,0.1);
+        border: 1px solid rgba(251,191,36,0.25);
+        color: #fbbf24;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: left;
+    }
+    .info-box {
+        background: rgba(56, 189, 248, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        font-size: 14px;
+        color: var(--accent);
+        text-align: left;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="centered-container" style="padding-top: 40px; padding-bottom: 40px;">
+    <div class="card text-center" style="max-width: 900px; width: 100%;">
+        <h2 class="mb-4" style="font-size: 28px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">📝 Generated Questions</h2>
+        
+        {% if questions.startswith('<div') %}
+            <!-- Rate limit message or error HTML -->
+            {{ questions|safe }}
+        {% else %}
+            <!-- Normal questions -->
+            <div class="questions">{{ questions }}</div>
+        {% endif %}
+        
+        <div class="info-box">
+            <strong>ℹ️ Free Tier Note:</strong> Gemini API has rate limits. 
+            If you see rate limit messages, just wait 60 seconds and try again.
+        </div>
+        
+        <div class="flex justify-center gap-3 mt-4" style="flex-wrap: wrap;">
+            <a href="/upload" class="btn btn-primary">📤 Upload Another PDF</a>
+            <a href="/dashboard" class="btn btn-secondary">📊 Go to Dashboard</a>
         </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

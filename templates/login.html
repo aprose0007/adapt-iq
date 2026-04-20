@@ -1,117 +1,134 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - AptitudeAI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #6366f1;
-            --secondary: #a855f7;
-            --bg: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --border: rgba(255, 255, 255, 0.1);
-        }
+{% extends "base.html" %}
+{% set hide_nav = true %}
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Outfit', sans-serif;
-            background: var(--bg);
-            color: white;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+{% block title %}Login – AdaptIQ{% endblock %}
 
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 30px;
-            padding: 48px;
-            backdrop-filter: blur(20px);
-            width: 100%;
-            max-width: 450px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
+{% block content %}
+<div class="centered-container">
+    <div class="card" style="max-width: 460px; width: 100%;">
+        <!-- Logo -->
+        <div class="logo justify-center mb-3">
+            <div class="logo-icon">🧠</div>
+            <div class="logo-text">Adapt<span>IQ</span></div>
+        </div>
 
-        h1 { font-size: 32px; margin-bottom: 8px; text-align: center; }
-        .subtitle { color: #94a3b8; text-align: center; margin-bottom: 32px; font-size: 15px; }
+        <h1 class="text-center">Welcome back</h1>
+        <p class="subtitle text-center mb-4">Sign in to continue your learning journey</p>
 
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; color: #cbd5e1; font-size: 14px; font-weight: 500; }
-
-        input {
-            width: 100%;
-            padding: 14px 18px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: white;
-            font-size: 16px;
-            box-sizing: border-box;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        input:focus { border-color: var(--primary); }
-
-        .btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            border: none;
-            border-radius: 14px;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 12px;
-            transition: all 0.3s;
-        }
-
-        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
-
-        .error {
-            background: rgba(244, 63, 94, 0.1);
-            color: #f43f5e;
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            text-align: center;
-        }
-
-        .footer { text-align: center; margin-top: 24px; color: #94a3b8; font-size: 14px; }
-        .footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1>Welcome Back</h1>
-        <p class="subtitle">Please enter your details to continue</p>
-
+        <!-- Error / Firestore warning -->
         {% if error %}
-        <div class="error">{{ error }}</div>
+            {% if 'Firestore API is disabled' in error %}
+            <div class="alert alert-warning mb-4">
+                ⚠️ <strong>Firestore API not enabled.</strong><br>
+                Please visit
+                <a href="https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=adapt-iq-fc122" target="_blank">
+                    Google Cloud Console
+                </a>
+                and click <strong>Enable</strong>, then try again.
+            </div>
+            {% else %}
+            <div class="alert mb-4">⚠️ {{ error }}</div>
+            {% endif %}
         {% endif %}
 
-        <form action="/login" method="post">
+        <!-- Google Sign-In -->
+        {% if firebase and firebase.api_key %}
+        <button class="btn btn-secondary w-full mb-3" id="googleBtn" onclick="signInWithGoogle()" style="justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                <path fill="none" d="M0 0h48v48H0z"/>
+            </svg>
+            <span class="btn-text">Continue with Google</span>
+            <div class="spinner" style="display: none; width: 18px; height: 18px; border-width: 2px;"></div>
+        </button>
+        {% endif %}
+
+        <div class="flex items-center gap-3 mb-3" style="color: var(--muted); font-size: 13px;">
+            <div style="flex: 1; height: 1px; background: var(--border);"></div>
+            or sign in with email
+            <div style="flex: 1; height: 1px; background: var(--border);"></div>
+        </div>
+
+        <!-- Email form -->
+        <form action="/login" method="post" id="loginForm">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" name="username" id="username" required>
+                <input type="text" name="username" id="username" placeholder="Enter your username" required autocomplete="username">
             </div>
-            <div class="form-group">
+            <div class="form-group mb-3">
                 <label for="password">Password</label>
-                <input type="password" name="password" id="password" required>
+                <input type="password" name="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
             </div>
-            <button type="submit" class="btn">Login</button>
+            <button type="submit" class="btn btn-primary w-full">Sign In</button>
         </form>
 
-        <div class="footer">
-            Don't have an account? <a href="/register">Create one</a>
+        <div class="text-center mt-3" style="color: var(--muted); font-size: 14px;">
+            Don't have an account? <a href="/register" style="color: var(--primary); text-decoration: none; font-weight: 600;">Create one</a>
         </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+    <!-- Firebase SDK (only loaded when API key is set) -->
+    {% if firebase and firebase.api_key %}
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+    <script>
+        firebase.initializeApp({
+            apiKey:            "{{ firebase.api_key }}",
+            authDomain:        "{{ firebase.auth_domain }}",
+            projectId:         "{{ firebase.project_id }}",
+            storageBucket:     "{{ firebase.storage_bucket }}",
+            messagingSenderId: "{{ firebase.messaging_sender_id }}",
+            appId:             "{{ firebase.app_id }}",
+            measurementId:     "{{ firebase.measurement_id }}"
+        });
+
+        async function signInWithGoogle() {
+            const btn = document.getElementById('googleBtn');
+            const spinner = btn.querySelector('.spinner');
+            const btnText = btn.querySelector('.btn-text');
+            
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.7';
+            spinner.style.display = 'block';
+            btnText.style.display = 'none';
+
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const result   = await firebase.auth().signInWithPopup(provider);
+                const idToken  = await result.user.getIdToken();
+
+                const res  = await fetch('/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_token: idToken })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    window.location.href = data.redirect || '/dashboard';
+                } else {
+                    alert('Google sign-in failed: ' + (data.error || 'Unknown error'));
+                    resetBtn(btn, spinner, btnText);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Google sign-in error: ' + err.message);
+                resetBtn(btn, spinner, btnText);
+            }
+        }
+        
+        function resetBtn(btn, spinner, btnText) {
+            btn.style.pointerEvents = 'auto';
+            btn.style.opacity = '1';
+            spinner.style.display = 'none';
+            btnText.style.display = 'inline';
+        }
+    </script>
+    {% endif %}
+{% endblock %}
