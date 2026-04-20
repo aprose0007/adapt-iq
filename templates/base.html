@@ -16,7 +16,7 @@
             <div class="logo-icon">🎓</div>
             <div class="logo-text">Adapt<span>IQ</span></div>
         </a>
-        <div class="nav-links">
+        <div class="nav-links" id="navLinks">
             {% if session.get('user_id') %}
                 <a href="/dashboard">Dashboard</a>
                 <a href="/upload">New Quiz</a>
@@ -27,11 +27,31 @@
                 <a href="/register" class="btn btn-primary" style="padding: 8px 16px; font-size: 14px;">Register</a>
             {% endif %}
         </div>
+        <div class="menu-toggle" id="menuToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
     </nav>
     {% endif %}
 
     {% block content %}{% endblock %}
 
     {% block extra_scripts %}{% endblock %}
+    <script>
+        const menuToggle = document.getElementById('menuToggle');
+        const navLinks = document.getElementById('navLinks');
+        if (menuToggle && navLinks) {
+            menuToggle.addEventListener('click', () => {
+                navLinks.classList.toggle('active');
+            });
+            // Close menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!menuToggle.contains(e.target) && !navLinks.contains(e.target)) {
+                    navLinks.classList.remove('active');
+                }
+            });
+        }
+    </script>
 </body>
 </html>
