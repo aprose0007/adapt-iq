@@ -2,7 +2,7 @@ flask==3.0.0
 pdfplumber
 firebase-admin
 google-cloud-firestore
-google-generativeai
+google-genai
 python-dotenv
 firebase-functions
 gunicorn
