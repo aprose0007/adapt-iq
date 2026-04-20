@@ -23,6 +23,10 @@ print("="*60 + "\n")
 # LOGIN & REGISTRATION
 # ============================================
 
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
+
 @app.route('/')
 def home():
     return render_template("index.html")

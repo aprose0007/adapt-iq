@@ -6,33 +6,31 @@
     <title>{% block title %}AdaptIQ{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
     {% if not hide_nav %}
     <nav class="navbar">
-        <a href="{% if session.get('user_id') %}/dashboard{% else %}/{% endif %}" style="text-decoration: none; color: inherit;">
-            <div class="logo">
-                <div class="logo-icon">🧠</div>
-                <div class="logo-text">Adapt<span>IQ</span></div>
-            </div>
+        <a href="/" class="logo" style="text-decoration: none;">
+            <div class="logo-icon">🎓</div>
+            <div class="logo-text">Adapt<span>IQ</span></div>
         </a>
         <div class="nav-links">
             {% if session.get('user_id') %}
+                <a href="/dashboard">Dashboard</a>
                 <a href="/upload">New Quiz</a>
                 <a href="/mentor">Mentor</a>
-                <span class="btn btn-secondary" style="padding: 8px 16px; margin-left: 10px;">{{ session.get('user_name', 'Student') }}</span>
-                <a href="/logout" style="color: var(--error);">Logout</a>
+                <a href="/logout">Logout</a>
             {% else %}
                 <a href="/login">Login</a>
-                <a href="/register" class="btn btn-primary" style="padding: 8px 16px;">Sign Up</a>
+                <a href="/register" class="btn btn-primary" style="padding: 8px 16px; font-size: 14px;">Register</a>
             {% endif %}
         </div>
     </nav>
     {% endif %}
 
-    {% block content %}
-    {% endblock %}
+    {% block content %}{% endblock %}
 
     {% block extra_scripts %}{% endblock %}
 </body>
