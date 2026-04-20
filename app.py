@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, session, jsonify, redirect
 import pdfplumber
 import os
+import tempfile
 import time
 import re
 import json
@@ -288,7 +289,7 @@ def upload_file():
         num_questions = int(request.form.get('num_questions', 10))
         
         # Save and extract
-        pdf_path = "temp.pdf"
+        pdf_path = os.path.join(tempfile.gettempdir(), f"temp_{int(time.time())}.pdf")
         file.save(pdf_path)
         
         # Use new AI Engine
