@@ -71,56 +71,53 @@ class AIEngine:
             print(f"AI Topic Error: {e}")
             return ["General Aptitude"]
 
-    def generate_quiz(self, pages_content, num_questions=10):
-        """Generate high-quality MCQs with topics and page mappings"""
+    def generate_quiz(self, pdf_path, num_questions=10):
+        """Generate MCQs using Gemini's native PDF processing for maximum relevance."""
         if not self.has_api:
             return self._mock_generate_quiz(num_questions)
 
-        # Increase context significantly - up to 60k chars (~10k-15k words)
-        context_text = full_text[:60000]
-        
-        # DEBUG: Print snippet of context to logs
-        print(f"--- CONTEXT SNIPPET (First 500 chars) ---\n{context_text[:500]}\n---------------------------------------")
-
-        prompt = f"""
-        You are a highly meticulous academic examiner. Your task is to generate {num_questions} high-quality, relevant multiple-choice questions (MCQs) based EXCLUSIVELY and STRICTLY on the provided text content below.
-
-        CRITICAL RELEVANCE RULES:
-        1. **Strict Derivation**: Every question MUST be directly supported by a specific sentence or data point in the provided text. If the information is not in the text, do NOT generate a question for it.
-        2. **No Hallucinations**: Do not use your external training data to add facts that are not in the provided text.
-        3. **Contextual Distractors**: The incorrect options (B, C, D) must be plausible but definitively wrong according to the text. They should be related to the topic of the question.
-        4. **Deep Analysis**: Focus on core concepts, definitions, and logical conclusions present in the document.
-        5. **Detailed Explanations**: For the explanation field, explain exactly which part of the text confirms the correct answer.
-
-        TEXT CONTENT TO ANALYZE:
-        {context_text}
-
-        Return a JSON array of objects with these fields:
-        [
-          {{
-            "question": "Deeply relevant question based on the text",
-            "options": ["A) Correct answer from text", "B) Plausible distractor", "C) Plausible distractor", "D) Plausible distractor"],
-            "correct": "A",
-            "explanation": "Detailed explanation citing the context",
-            "topic": "Specific Topic",
-            "page": 1
-          }}
-        ]
-        """
-
         try:
-            print(f"Generating {num_questions} AI questions using {len(context_text)} chars of context...")
+            print(f"[*] Uploading PDF to Gemini for native analysis...")
+            # Upload file to Gemini
+            file_ref = self.client.files.upload(path=pdf_path)
+            
+            # Wait for processing if necessary (usually instant for PDFs)
+            # but we'll proceed as Gemini 2.0 handles it well
+            
+            prompt = f"""
+            You are a professional academic examiner. I have provided a PDF document.
+            Your task is to generate {num_questions} high-quality, relevant multiple-choice questions (MCQs) based EXCLUSIVELY on the content of this specific document.
+
+            STRICT RELEVANCE RULES:
+            1. **Direct Sourcing**: Every question, option, and explanation MUST be derived directly from the uploaded PDF.
+            2. **Document Context**: Use the text, tables, and charts in the PDF to create deep, analytical questions.
+            3. **No General Knowledge**: Do not use any information that is not explicitly stated or clearly implied in the provided document.
+            4. **Detailed Explanations**: Explain exactly which section or concept in the PDF confirms the correct answer.
+
+            Return the output as a JSON array of objects:
+            [
+              {{
+                "question": "Question text...",
+                "options": ["A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"],
+                "correct": "A",
+                "explanation": "Detailed source-based explanation",
+                "topic": "Specific Topic from PDF",
+                "page": 1
+              }}
+            ]
+            """
+
+            print(f"[*] Generating {num_questions} questions from PDF...")
             response = self.client.models.generate_content(
                 model=self.model_id,
-                contents=prompt,
+                contents=[file_ref, prompt],
                 config=types.GenerateContentConfig(
                     response_mime_type='application/json',
-                    temperature=0.2, # Lower temperature for better factual consistency
+                    temperature=0.1, # Extremely low for maximum factuality
                 )
             )
             
             content_text = response.text
-            # Strip markdown if present
             if "```json" in content_text:
                 content_text = content_text.split("```json")[1].split("```")[0].strip()
             elif "```" in content_text:
@@ -128,20 +125,43 @@ class AIEngine:
             
             questions = json.loads(content_text)
             
-            if not isinstance(questions, list):
-                raise ValueError("AI response is not a JSON list")
-                
+            # Add IDs
             for i, q in enumerate(questions):
                 q['id'] = i
             
-            print(f"Successfully generated {len(questions)} relevant questions.")
+            # Cleanup: Delete the file from Gemini servers after processing
+            try:
+                self.client.files.delete(name=file_ref.name)
+            except:
+                pass
+                
+            print(f"[+] Successfully generated {len(questions)} high-relevance questions.")
             return questions
-            
+
         except Exception as e:
-            print(f"[ERROR] AI Quiz Generation Failed: {e}")
-            if hasattr(response, 'text'):
-                print(f"Raw AI Response Snippet: {response.text[:200]}...")
+            print(f"[ERROR] Native AI Quiz Failed: {e}")
             return self._mock_generate_quiz(num_questions)
+
+    def generate_topics_native(self, pdf_path):
+        """Identify topics using native PDF analysis."""
+        if not self.has_api:
+            return ["General Aptitude"]
+            
+        try:
+            file_ref = self.client.files.upload(path=pdf_path)
+            prompt = "Identify the top 5 aptitude/educational topics covered in this document. Return ONLY a JSON array of strings."
+            
+            response = self.client.models.generate_content(
+                model=self.model_id,
+                contents=[file_ref, prompt],
+                config=types.GenerateContentConfig(response_mime_type='application/json')
+            )
+            
+            topics = json.loads(response.text)
+            self.client.files.delete(name=file_ref.name)
+            return topics
+        except:
+            return ["Aptitude"]
 
     def _mock_generate_quiz(self, num_questions):
         """Fallback for Demo Mode"""

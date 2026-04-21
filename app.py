@@ -311,21 +311,14 @@ def upload_file():
         pdf_path = os.path.join(tempfile.gettempdir(), f"temp_{int(time.time())}.pdf")
         file.save(pdf_path)
         
-        # Use new AI Engine
-        pages_content = ai_engine.extract_text(pdf_path)
+        # Generate AI Quiz using Native PDF Processing (Superior Relevance)
+        questions = ai_engine.generate_quiz(pdf_path, num_questions)
+        
+        # Identify main topics natively
+        topics = ai_engine.generate_topics_native(pdf_path)
+        
+        # Cleanup local temp file
         os.remove(pdf_path)
-        
-        if not pages_content:
-            return render_template("error.html", error="Could not read PDF content")
-            
-        print(f"Extracted {len(pages_content)} pages")
-        
-        # Generate AI Quiz
-        questions = ai_engine.generate_quiz(pages_content, num_questions)
-        
-        # Identify main topics for the session
-        all_text = " ".join([p['text'] for p in pages_content])
-        topics = ai_engine.identify_topics(all_text)
         
         # Store in session
         session['questions'] = questions
