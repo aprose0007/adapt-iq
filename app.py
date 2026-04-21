@@ -364,9 +364,8 @@ def get_question(qid):
         return jsonify({'error': 'Question not found'}), 404
     
     question = questions[qid].copy()
-    if 'correct' in question:
-        del question['correct']
-    
+    # Include correct answer for immediate feedback
+    question['correct'] = questions[qid].get('correct')
     question['user_answer'] = answers.get(str(qid))
     
     return jsonify({

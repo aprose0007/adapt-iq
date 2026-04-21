@@ -79,32 +79,30 @@ class AIEngine:
         # Increase context significantly - up to 60k chars (~10k-15k words)
         context_text = full_text[:60000]
         
-        prompt = f"""
-        You are an expert academic examiner. Your task is to generate {num_questions} high-quality, relevant multiple-choice questions (MCQs) based EXCLUSIVELY on the provided text content.
+        # DEBUG: Print snippet of context to logs
+        print(f"--- CONTEXT SNIPPET (First 500 chars) ---\n{context_text[:500]}\n---------------------------------------")
 
-        STRICT REQUIREMENTS:
-        1. RELEVANCE: Every question must be directly derived from specific facts, concepts, or data mentioned in the text. Do NOT hallucinate or use external knowledge not present in the text.
-        2. OPTIONS: Provide 4 options (A, B, C, D) for each question. 
-           - Distractors (B, C, D) must be plausible and related to the text content to ensure the question is challenging.
-           - Options must be clear and not overlap.
-        3. EXPLANATIONS: For each question, provide a detailed explanation. 
-           - Start by explaining why the correct option is the right answer based on the text.
-           - Mention which part of the text the information comes from if possible.
-           - Briefly explain why the other options are incorrect distractors.
-        4. TOPICS: Assign a specific sub-topic for each question based on the content (e.g., 'Historical Context', 'Mathematical Proof', 'Scientific Theory').
-        5. JSON FORMAT: Return your output strictly as a JSON array of objects.
+        prompt = f"""
+        You are a highly meticulous academic examiner. Your task is to generate {num_questions} high-quality, relevant multiple-choice questions (MCQs) based EXCLUSIVELY and STRICTLY on the provided text content below.
+
+        CRITICAL RELEVANCE RULES:
+        1. **Strict Derivation**: Every question MUST be directly supported by a specific sentence or data point in the provided text. If the information is not in the text, do NOT generate a question for it.
+        2. **No Hallucinations**: Do not use your external training data to add facts that are not in the provided text.
+        3. **Contextual Distractors**: The incorrect options (B, C, D) must be plausible but definitively wrong according to the text. They should be related to the topic of the question.
+        4. **Deep Analysis**: Focus on core concepts, definitions, and logical conclusions present in the document.
+        5. **Detailed Explanations**: For the explanation field, explain exactly which part of the text confirms the correct answer.
 
         TEXT CONTENT TO ANALYZE:
         {context_text}
 
-        EXPECTED JSON STRUCTURE:
+        Return a JSON array of objects with these fields:
         [
           {{
-            "question": "Question text here...",
-            "options": ["A) Option text", "B) Option text", "C) Option text", "D) Option text"],
+            "question": "Deeply relevant question based on the text",
+            "options": ["A) Correct answer from text", "B) Plausible distractor", "C) Plausible distractor", "D) Plausible distractor"],
             "correct": "A",
-            "explanation": "Detailed explanation...",
-            "topic": "Sub-topic",
+            "explanation": "Detailed explanation citing the context",
+            "topic": "Specific Topic",
             "page": 1
           }}
         ]

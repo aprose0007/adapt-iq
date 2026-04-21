@@ -110,6 +110,34 @@
         color: var(--text);
     }
     
+    .option.correct {
+        background: rgba(16, 185, 129, 0.15) !important;
+        border-color: var(--success) !important;
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    }
+    
+    .option.wrong {
+        background: rgba(239, 68, 68, 0.15) !important;
+        border-color: var(--error) !important;
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+    }
+    
+    .option.disabled {
+        pointer-events: none;
+        opacity: 0.8;
+    }
+    
+    .explanation-box {
+        margin-top: 20px;
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border-left: 4px solid var(--primary);
+        border-radius: 8px;
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
     .navigator-card {
         margin: 30px 0;
         padding: 24px;
@@ -257,42 +285,79 @@
         }, 1000);
     }
     
+    function selectOption(letter, element, data) {
+        if (element) {
+            // Check if already answered
+            if (answers[currentQuestion] !== undefined) return;
+            
+            const correctLetter = data.question.correct;
+            const isCorrect = (letter === correctLetter);
+            
+            // Mark the selected one
+            if (isCorrect) {
+                element.classList.add('correct');
+            } else {
+                element.classList.add('wrong');
+                // Show the correct one too
+                const options = document.querySelectorAll('.option');
+                options.forEach(opt => {
+                    const radio = opt.querySelector('input[type="radio"]');
+                    if (radio && radio.value === correctLetter) {
+                        opt.classList.add('correct');
+                    }
+                });
+            }
+            
+            // Disable all options
+            document.querySelectorAll('.option').forEach(opt => opt.classList.add('disabled'));
+            
+            // Show explanation if available
+            const expl = document.getElementById('explanation-box');
+            if (expl && data.question.explanation) {
+                expl.style.display = 'block';
+                expl.innerHTML = `<strong>Explanation:</strong><br>${data.question.explanation}`;
+            }
+            
+            saveAnswer(letter);
+        }
+    }
+    
+    // We need to keep the original data in a global variable for reference
+    let currentQuestionData = null;
+    
     function loadQuestion(qid) {
         fetch('/api/question/' + qid)
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(data) {
-                if (data.error) {
-                    alert(data.error);
-                    return;
-                }
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return alert(data.error);
                 currentQuestion = qid;
+                currentQuestionData = data;
                 displayQuestion(data);
                 updateProgress(qid);
                 updateQuestionNumbers();
-            })
-            .catch(function(error) {
-                console.error('Error loading question:', error);
             });
     }
-    
+
     function displayQuestion(data) {
         let question = data.question;
         let container = document.getElementById('quiz-container');
+        let userAnswer = answers[currentQuestion];
         
         let optionsHtml = '';
         for (let i = 0; i < question.options.length; i++) {
             let option = question.options[i];
             let optionLetter = option.charAt(0);
-            let isChecked = (question.user_answer === optionLetter);
             
-            let selectedClass = isChecked ? 'selected' : '';
-            let checkedAttr = isChecked ? 'checked' : '';
+            let classes = 'option';
+            if (userAnswer) {
+                classes += ' disabled';
+                if (optionLetter === question.correct) classes += ' correct';
+                else if (optionLetter === userAnswer) classes += ' wrong';
+            }
             
             optionsHtml += `
-                <div class="option ${selectedClass}" onclick="selectOption('${optionLetter}', this)">
-                    <input type="radio" name="question-option" value="${optionLetter}" ${checkedAttr}>
+                <div class="${classes}" onclick="selectOption('${optionLetter}', this, currentQuestionData)">
+                    <input type="radio" name="question-option" value="${optionLetter}" ${userAnswer === optionLetter ? 'checked' : ''}>
                     <label>${option}</label>
                 </div>
             `;
@@ -305,30 +370,16 @@
             <div class="question-number-label">Question ${currentQuestion + 1} of ${totalQuestions}</div>
             <div class="question-text">${question.question}</div>
             <div class="options">${optionsHtml}</div>
+            <div id="explanation-box" class="explanation-box" style="${userAnswer ? 'display:block' : ''}">
+                ${userAnswer ? '<strong>Explanation:</strong><br>' + (question.explanation || '') : ''}
+            </div>
             <div class="flex justify-between mt-4">
                 <button class="btn btn-secondary" onclick="previousQuestion()" ${prevDisabled}>← Previous</button>
                 <button class="btn btn-primary" onclick="nextQuestion()" ${nextDisabled}>Next →</button>
             </div>
         `;
     }
-    
-    function selectOption(letter, element) {
-        let options = document.querySelectorAll('.option');
-        for (let i = 0; i < options.length; i++) {
-            options[i].classList.remove('selected');
-            let radio = options[i].querySelector('input[type="radio"]');
-            if (radio) radio.checked = false;
-        }
-        
-        if (element) {
-            element.classList.add('selected');
-            let radio = element.querySelector('input[type="radio"]');
-            if (radio) radio.checked = true;
-        }
-        
-        saveAnswer(letter);
-    }
-    
+
     function saveAnswer(letter) {
         answers[currentQuestion] = letter;
         
