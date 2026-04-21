@@ -21,7 +21,26 @@ print("[~] INSTANT MODE - Questions from your PDF (No API waiting!)")
 print("="*60 + "\n")
 
 # ============================================
-# LOGIN & REGISTRATION
+# AUTO-LOGIN (BYPASS AUTH)
+# ============================================
+
+@app.before_request
+def auto_login():
+    """Bypass login by automatically setting up a guest session."""
+    # Skip for static files and favicon
+    if request.path.startswith('/static') or request.path == '/favicon.ico':
+        return
+        
+    if 'user_id' not in session:
+        # Default to student1 (Rahul) from the database
+        session['user_id'] = "student1"
+        session['username'] = "student1"
+        session['user_name'] = "Learner"
+        session['level'] = "beginner"
+        print("[*] Auto-logged in as Guest Learner")
+
+# ============================================
+# LOGIN & REGISTRATION (DISABLED)
 # ============================================
 
 @app.route('/favicon.ico')
@@ -30,7 +49,7 @@ def favicon():
 
 @app.route('/')
 def home():
-    return render_template("index.html")
+    return redirect('/dashboard')
 
 def firebase_config():
     """Return Firebase web config dict for passing to templates."""
