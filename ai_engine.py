@@ -54,12 +54,19 @@ class AIEngine:
         try:
             response = self.client.models.generate_content(
                 model=self.model_id,
-                contents=prompt
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type='application/json',
+                )
             )
-            match = re.search(r'\[.*\]', response.text, re.DOTALL)
-            if match:
-                return json.loads(match.group())
-            return ["Aptitude"]
+            # Handle potential JSON response with or without markdown
+            content_text = response.text
+            if "```json" in content_text:
+                content_text = content_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in content_text:
+                content_text = content_text.split("```")[1].split("```")[0].strip()
+            
+            return json.loads(content_text)
         except Exception as e:
             print(f"AI Topic Error: {e}")
             return ["General Aptitude"]
@@ -69,57 +76,73 @@ class AIEngine:
         if not self.has_api:
             return self._mock_generate_quiz(num_questions)
 
-        # Merge text for context
-        full_text = " ".join([p['text'] for p in pages_content])
+        # Increase context significantly - up to 60k chars (~10k-15k words)
+        context_text = full_text[:60000]
         
         prompt = f"""
-        You are an expert educational content creator and psychometrician specializing in competitive exams.
-        Generate {num_questions} professional, highly detailed, and rigorous multiple-choice questions (MCQs) based strictly on the provided educational material.
-        
-        CRITICAL REQUIREMENTS FOR QUESTIONS AND OPTIONS:
-        1. **Detail and Rigor**: Questions must be in-depth, testing comprehension, application, and analytical skills, not just rote memorization.
-        2. **Relevant Options**: The 4 options (A, B, C, D) MUST be highly relevant to the question. The distractors (incorrect options) must be highly plausible, addressing common misconceptions or errors related to the topic. Avoid silly or obvious wrong answers.
-        3. **Detailed Explanation**: The explanation must be comprehensive. It should explain exactly why the correct answer is right, AND briefly explain why each of the other options is incorrect.
-        4. **Coverage**: Distribute the questions evenly across the provided text content.
-        
-        For each question, provide:
-        - The question text (detailed and clear)
-        - 4 options (A, B, C, D)
-        - The correct option letter (just the letter: A, B, C, or D)
-        - A detailed logical explanation for why the answer is correct and others are wrong.
-        - The specific aptitude topic (e.g. Quantitative, Logical, Verbal, Reading Comprehension, Data Interpretation)
-        - The source page number (estimate based on the text if necessary, default to 1).
+        You are an expert academic examiner. Your task is to generate {num_questions} high-quality, relevant multiple-choice questions (MCQs) based EXCLUSIVELY on the provided text content.
 
-        Return your output STRICTLY as a valid JSON array of objects, with no markdown formatting outside of the array. The JSON should match this structure:
+        STRICT REQUIREMENTS:
+        1. RELEVANCE: Every question must be directly derived from specific facts, concepts, or data mentioned in the text. Do NOT hallucinate or use external knowledge not present in the text.
+        2. OPTIONS: Provide 4 options (A, B, C, D) for each question. 
+           - Distractors (B, C, D) must be plausible and related to the text content to ensure the question is challenging.
+           - Options must be clear and not overlap.
+        3. EXPLANATIONS: For each question, provide a detailed explanation. 
+           - Start by explaining why the correct option is the right answer based on the text.
+           - Mention which part of the text the information comes from if possible.
+           - Briefly explain why the other options are incorrect distractors.
+        4. TOPICS: Assign a specific sub-topic for each question based on the content (e.g., 'Historical Context', 'Mathematical Proof', 'Scientific Theory').
+        5. JSON FORMAT: Return your output strictly as a JSON array of objects.
+
+        TEXT CONTENT TO ANALYZE:
+        {context_text}
+
+        EXPECTED JSON STRUCTURE:
         [
           {{
-            "question": "Detailed question text...",
-            "options": ["A) First option", "B) Second option", "C) Third option", "D) Fourth option"],
+            "question": "Question text here...",
+            "options": ["A) Option text", "B) Option text", "C) Option text", "D) Option text"],
             "correct": "A",
-            "explanation": "Detailed explanation covering why A is correct, and why B, C, and D are incorrect...",
-            "topic": "Specific Topic",
+            "explanation": "Detailed explanation...",
+            "topic": "Sub-topic",
             "page": 1
           }}
         ]
-
-        Text Content to Base Questions On:
-        {full_text[:12000]}
         """
 
         try:
+            print(f"Generating {num_questions} AI questions using {len(context_text)} chars of context...")
             response = self.client.models.generate_content(
                 model=self.model_id,
-                contents=prompt
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type='application/json',
+                    temperature=0.2, # Lower temperature for better factual consistency
+                )
             )
-            match = re.search(r'\[.*\]', response.text, re.DOTALL)
-            if match:
-                questions = json.loads(match.group())
-                for i, q in enumerate(questions):
-                    q['id'] = i
-                return questions
-            return self._mock_generate_quiz(num_questions)
+            
+            content_text = response.text
+            # Strip markdown if present
+            if "```json" in content_text:
+                content_text = content_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in content_text:
+                content_text = content_text.split("```")[1].split("```")[0].strip()
+            
+            questions = json.loads(content_text)
+            
+            if not isinstance(questions, list):
+                raise ValueError("AI response is not a JSON list")
+                
+            for i, q in enumerate(questions):
+                q['id'] = i
+            
+            print(f"Successfully generated {len(questions)} relevant questions.")
+            return questions
+            
         except Exception as e:
-            print(f"AI Quiz Error: {e}")
+            print(f"[ERROR] AI Quiz Generation Failed: {e}")
+            if hasattr(response, 'text'):
+                print(f"Raw AI Response Snippet: {response.text[:200]}...")
             return self._mock_generate_quiz(num_questions)
 
     def _mock_generate_quiz(self, num_questions):
