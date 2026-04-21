@@ -72,48 +72,65 @@ class AIEngine:
             return ["General Aptitude"]
 
     def generate_quiz(self, pdf_path, num_questions=10):
-        """Generate MCQs using Gemini's native PDF processing for maximum relevance."""
+        """Generate MCQs using Gemini's native PDF processing with strict grounding."""
         if not self.has_api:
             return self._mock_generate_quiz(num_questions)
 
         try:
-            print(f"[*] Uploading PDF to Gemini for native analysis...")
-            # Upload file to Gemini
+            print(f"[*] Uploading PDF for Grounded Analysis...")
             file_ref = self.client.files.upload(path=pdf_path)
             
-            # Wait for processing if necessary (usually instant for PDFs)
-            # but we'll proceed as Gemini 2.0 handles it well
-            
+            # THE GROUNDED PROMPT (adapted from user request)
             prompt = f"""
-            You are a professional academic examiner. I have provided a PDF document.
-            Your task is to generate {num_questions} high-quality, relevant multiple-choice questions (MCQs) based EXCLUSIVELY on the content of this specific document.
+            You are a grounded question-generation engine.
+            Your job is to generate {num_questions} multiple-choice questions strictly from the provided PDF document.
 
-            STRICT RELEVANCE RULES:
-            1. **Direct Sourcing**: Every question, option, and explanation MUST be derived directly from the uploaded PDF.
-            2. **Document Context**: Use the text, tables, and charts in the PDF to create deep, analytical questions.
-            3. **No General Knowledge**: Do not use any information that is not explicitly stated or clearly implied in the provided document.
-            4. **Detailed Explanations**: Explain exactly which section or concept in the PDF confirms the correct answer.
+            You must behave like a closed-book generator:
+            - Use ONLY the provided document.
+            - Do NOT use outside knowledge.
+            - Do NOT fill gaps with assumptions.
+            - Do NOT add unsupported facts.
+            - If a detail is not explicitly stated or strongly inferable from the PDF, do not use it.
 
-            Return the output as a JSON array of objects:
+            PROCESS:
+            1. Read the full PDF document.
+            2. Identify major concepts, definitions, facts, processes, formulas, and key statements.
+            3. Select the most important and clearly supported points.
+            4. Generate MCQs only from those supported points.
+            5. For each question, create 4 options with exactly 1 correct answer.
+            6. Ensure distractors are relevant to the same topic and not random.
+            7. Add a detailed explanation based only on the PDF text.
+            8. Assign a specific topic and estimate the source page number.
+
+            CONSTRAINTS:
+            - No hallucination.
+            - No duplicated questions.
+            - No repeated options.
+            - No questions unrelated to the PDF.
+            - No vague wording like "this", "that", "it" without context.
+            - No questions whose answer cannot be verified from the given PDF.
+
+            OUTPUT:
+            Return JSON only as an array of objects matching this exact structure:
             [
               {{
-                "question": "Question text...",
-                "options": ["A) Option 1", "B) Option 2", "C) Option 3", "D) Option 4"],
-                "correct": "A",
-                "explanation": "Detailed source-based explanation",
-                "topic": "Specific Topic from PDF",
+                "question": "string",
+                "options": ["A) option text", "B) option text", "C) option text", "D) option text"],
+                "correct": "A|B|C|D",
+                "explanation": "string (including source_basis)",
+                "topic": "string",
                 "page": 1
               }}
             ]
             """
 
-            print(f"[*] Generating {num_questions} questions from PDF...")
+            print(f"[*] Executing Grounded Generation...")
             response = self.client.models.generate_content(
                 model=self.model_id,
                 contents=[file_ref, prompt],
                 config=types.GenerateContentConfig(
                     response_mime_type='application/json',
-                    temperature=0.1, # Extremely low for maximum factuality
+                    temperature=0.0, # Absolute minimum creativity for maximum grounding
                 )
             )
             
@@ -129,17 +146,17 @@ class AIEngine:
             for i, q in enumerate(questions):
                 q['id'] = i
             
-            # Cleanup: Delete the file from Gemini servers after processing
+            # Cleanup
             try:
                 self.client.files.delete(name=file_ref.name)
             except:
                 pass
                 
-            print(f"[+] Successfully generated {len(questions)} high-relevance questions.")
+            print(f"[+] Grounded generation complete: {len(questions)} questions.")
             return questions
 
         except Exception as e:
-            print(f"[ERROR] Native AI Quiz Failed: {e}")
+            print(f"[ERROR] Grounded AI Quiz Failed: {e}")
             return self._mock_generate_quiz(num_questions)
 
     def generate_topics_native(self, pdf_path):
