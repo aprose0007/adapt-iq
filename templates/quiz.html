@@ -204,6 +204,38 @@
         box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
     }
     
+    .study-reference {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 24px;
+        margin-top: 30px;
+        backdrop-filter: blur(10px);
+    }
+    .study-reference h3 {
+        font-size: 18px;
+        margin-bottom: 15px;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .key-point-item {
+        font-size: 14px;
+        line-height: 1.6;
+        margin-bottom: 12px;
+        padding-left: 20px;
+        position: relative;
+        color: var(--muted);
+    }
+    .key-point-item::before {
+        content: "•";
+        position: absolute;
+        left: 0;
+        color: var(--primary);
+        font-weight: bold;
+    }
+
     @media (max-width: 768px) {
         .quiz-header { flex-direction: column; gap: 15px; padding: 15px; text-align: center; }
         .progress-container { margin: 10px 0; width: 100%; order: 3; }
@@ -258,6 +290,18 @@
     <div class="text-center mt-4">
         <button class="submit-btn" onclick="submitQuiz()" id="submitBtn">✅ Submit Quiz</button>
     </div>
+
+    {% if session.get('key_points') %}
+    <div class="study-reference">
+        <h3><span style="font-size: 20px;">📖</span> Grounded Study Reference</h3>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">These points were extracted directly from your PDF to ground the questions.</p>
+        <div class="key-points-list">
+            {% for point in session.get('key_points', {}).get('key_points', []) %}
+            <div class="key-point-item">{{ point }}</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 

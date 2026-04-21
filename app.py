@@ -311,8 +311,8 @@ def upload_file():
         pdf_path = os.path.join(tempfile.gettempdir(), f"temp_{int(time.time())}.pdf")
         file.save(pdf_path)
         
-        # Generate AI Quiz using Native PDF Processing (Superior Relevance)
-        questions = ai_engine.generate_quiz(pdf_path, num_questions)
+        # Generate AI Quiz using 2-Step Grounded Pipeline
+        questions, key_points = ai_engine.generate_quiz(pdf_path, num_questions)
         
         # Identify main topics natively
         topics = ai_engine.generate_topics_native(pdf_path)
@@ -322,6 +322,7 @@ def upload_file():
         
         # Store in session
         session['questions'] = questions
+        session['key_points'] = key_points
         session['answers'] = {}
         session['topics'] = topics
         
